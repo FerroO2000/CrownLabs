@@ -243,7 +243,11 @@ var _ = Describe("Generation of the container based instances", func() {
 				})
 
 				It("Should set the instance phase to starting", func() {
-					Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+					//
+					//
+					//
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 				})
 			})
 
@@ -260,7 +264,8 @@ var _ = Describe("Generation of the container based instances", func() {
 				})
 
 				It("Should set the instance phase to Off", func() {
-					Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -300,7 +305,11 @@ var _ = Describe("Generation of the container based instances", func() {
 				})
 
 				It("Should set the correct instance phase", func() {
-					Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseReady))
+					//
+					//
+					//
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseReady))
 				})
 			})
 
@@ -323,7 +332,11 @@ var _ = Describe("Generation of the container based instances", func() {
 				})
 
 				It("Should set the instance phase to Off", func() {
-					Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					//
+					//
+					//
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -378,7 +391,11 @@ var _ = Describe("Generation of the container based instances", func() {
 			})
 
 			It("Should set the instance phase as starting", func() {
-				Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+				//
+				//
+				//
+				Expect(instance.Status.Environments).ToNot(BeEmpty())
+				Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 			})
 		})
 
@@ -432,7 +449,11 @@ var _ = Describe("Generation of the container based instances", func() {
 			})
 
 			It("Should set the correct instance phase", func() {
-				Expect(instance.Status.Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+				//
+				//
+				//
+				Expect(instance.Status.Environments).ToNot(BeEmpty())
+				Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 			})
 
 			Context("The instance is running", func() {

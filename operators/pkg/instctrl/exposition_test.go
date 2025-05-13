@@ -144,8 +144,17 @@ var _ = Describe("Generation of the exposition environment", func() {
 			svc.ClusterIP = clusterIP
 			return svc
 		},
-		EmptySpec:              corev1.ServiceSpec{ClusterIP: clusterIP},
-		InstanceStatusGetter:   func(inst *clv1alpha2.Instance) string { return inst.Status.IP },
+		EmptySpec: corev1.ServiceSpec{ClusterIP: clusterIP},
+		InstanceStatusGetter: func(inst *clv1alpha2.Instance) string {
+			//
+			//
+			//
+			//return inst.Status.IP
+			if len(inst.Status.Environments) > 0 {
+				return inst.Status.Environments[0].IP
+			}
+			return ""
+		},
 		InstanceStatusExpected: clusterIP,
 	}
 
@@ -155,8 +164,17 @@ var _ = Describe("Generation of the exposition environment", func() {
 			return forge.IngressSpec(host, forge.IngressGUIPath(inst, &environment),
 				forge.IngressDefaultCertificateName, serviceName.Name, forge.GUIPortName)
 		},
-		EmptySpec:              netv1.IngressSpec{},
-		InstanceStatusGetter:   func(inst *clv1alpha2.Instance) string { return inst.Status.URL },
+		EmptySpec: netv1.IngressSpec{},
+		InstanceStatusGetter: func(inst *clv1alpha2.Instance) string {
+			//return inst.Status.URL
+			//
+			//
+			//
+			if len(inst.Status.Environments) > 0 {
+				return inst.Status.Environments[0].URL
+			}
+			return ""
+		},
 		InstanceStatusExpected: fmt.Sprintf("https://%v/instance/%v/", host, instanceUID),
 	}
 
@@ -166,8 +184,17 @@ var _ = Describe("Generation of the exposition environment", func() {
 			return forge.IngressSpec(host, forge.IngressGUIPath(inst, &environment),
 				forge.IngressDefaultCertificateName, serviceName.Name, forge.GUIPortName)
 		},
-		EmptySpec:              netv1.IngressSpec{},
-		InstanceStatusGetter:   func(inst *clv1alpha2.Instance) string { return inst.Status.URL },
+		EmptySpec: netv1.IngressSpec{},
+		InstanceStatusGetter: func(inst *clv1alpha2.Instance) string {
+			//return inst.Status.URL
+			//
+			//
+			//
+			if len(inst.Status.Environments) > 0 {
+				return inst.Status.Environments[0].URL
+			}
+			return ""
+		},
 		InstanceStatusExpected: fmt.Sprintf("https://%v/instance/%v/app/", host, instanceUID),
 	}
 

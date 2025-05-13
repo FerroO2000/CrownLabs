@@ -128,7 +128,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 		It("Should correctly reconcile the instance", func() {
 			Expect(RunReconciler()).To(Succeed())
 
-			Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
+			//
+			//
+			//
+			Expect(instance.Status.Environments).ToNot(BeEmpty())
+			Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
 
 			By("Asserting the deployment has been created with no replicas", func() {
 				var deploy appsv1.Deployment
@@ -160,7 +164,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 			})
 
 			By("Asserting the state is coherent", func() {
-				Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseStarting))
+				//
+				//
+				//
+				Expect(instance.Status.Environments).ToNot(BeEmpty())
+				Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseStarting))
 			})
 
 			By("Asserting the deployment has been created", func() {
@@ -226,7 +234,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 					Expect(RunReconciler()).To(Succeed())
 
 					// Check the status phase is unset since it's retrieved from the VM (and the kubervirt operator is not available in the test env)
-					Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseUnset))
+					//
+					//
+					//
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseUnset))
 
 					By("Asserting the VM has been created", func() {
 						var vm virtv1.VirtualMachine
@@ -261,7 +273,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						vm.Status.PrintableStatus = virtv1.VirtualMachineStatusRunning
 						Expect(k8sClient.Update(ctx, &vm))
 						Expect(RunReconciler()).To(Succeed())
-						Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
+						//
+						//
+						//
+						Expect(instance.Status.Environments).ToNot(BeEmpty())
+						Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
 					})
 
 					By("Asserting the VM spec has been changed", func() {
@@ -285,8 +301,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 
 			It("Should correctly reconcile the instance", func() {
 				Expect(RunReconciler()).To(Succeed())
-
-				Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
+				//
+				//
+				//
+				Expect(instance.Status.Environments).ToNot(BeEmpty())
+				Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
 
 				By("Asserting the VM has NOT been created", func() {
 					var vmi virtv1.VirtualMachineInstance
@@ -323,7 +342,11 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 
 				By("Asserting the state is coherent", func() {
 					Expect(RunReconciler()).To(Succeed())
-					Expect(instance.Status.Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
+					//
+					//
+					//
+					Expect(instance.Status.Environments).ToNot(BeEmpty())
+					Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
 				})
 			})
 		})
