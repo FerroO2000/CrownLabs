@@ -51,7 +51,11 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	//
 
 	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	//instanceStatusEnv := instance.Status.Environments[envIndex]
+
+	//index out of range
+	if envIndex >= len(instance.Status.Environments) {
+		return nil
+	}
 
 	//
 	//
@@ -87,11 +91,6 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	//
 
 	instance.Status.Environments[envIndex].IP = service.Spec.ClusterIP
-
-	/* if err := r.Client.Status().Update(ctx, instance); err != nil {
-		log.Error(err, "failed to update instance status", "instance", klog.KObj(instance))
-		return err
-	} */
 
 	//
 	//
@@ -146,11 +145,6 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	//
 
 	// instance.Status.URL = forge.IngressGuiStatusURL(host, environment, instance)
-	/* 	instance.Status.Environments[envIndex] = instanceStatusEnv
-	   	if err := r.Client.Status().Update(ctx, instance); err != nil {
-	   		log.Error(err, "failed to update instance status", "instance", klog.KObj(instance))
-	   		return err
-	   	} */
 
 	return nil
 }
