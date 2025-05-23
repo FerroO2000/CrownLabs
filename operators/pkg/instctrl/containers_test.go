@@ -62,6 +62,7 @@ var _ = Describe("Generation of the container based instances", func() {
 
 		instance    clv1alpha2.Instance
 		environment clv1alpha2.Environment
+		index       int
 
 		objectName types.NamespacedName
 		svc        corev1.Service
@@ -136,7 +137,15 @@ var _ = Describe("Generation of the container based instances", func() {
 				Template: clv1alpha2.GenericRef{Name: templateName, Namespace: templateNamespace},
 				Tenant:   clv1alpha2.GenericRef{Name: tenantName},
 			},
+			Status: clv1alpha2.InstanceStatus{
+				Environments: []clv1alpha2.InstanceStatusEnv{
+					{Phase: ""},
+					{Phase: ""},
+					{Phase: ""},
+				},
+			},
 		}
+
 		environment = clv1alpha2.Environment{
 			Name:               environmentName,
 			EnvironmentType:    clv1alpha2.ClassContainer,
@@ -149,6 +158,8 @@ var _ = Describe("Generation of the container based instances", func() {
 				Disk:                  resource.MustParse(disk),
 			},
 		}
+
+		index = 0
 
 		objectName = forge.NamespacedName(&instance)
 
@@ -201,6 +212,8 @@ var _ = Describe("Generation of the container based instances", func() {
 
 		ctx, _ = clctx.InstanceInto(ctx, &instance)
 		ctx, _ = clctx.EnvironmentInto(ctx, &environment)
+		ctx = clctx.EnvironmentIndexInto(ctx, index)
+
 		errShVol = reconciler.Create(ctx, &shvol)
 		err = reconciler.EnforceContainerEnvironment(ctx)
 	})
@@ -247,7 +260,7 @@ var _ = Describe("Generation of the container based instances", func() {
 					//
 					//
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 				})
 			})
 
@@ -265,7 +278,7 @@ var _ = Describe("Generation of the container based instances", func() {
 
 				It("Should set the instance phase to Off", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -309,7 +322,7 @@ var _ = Describe("Generation of the container based instances", func() {
 					//
 					//
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseReady))
+					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseReady))
 				})
 			})
 
@@ -336,7 +349,7 @@ var _ = Describe("Generation of the container based instances", func() {
 					//
 					//
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -395,7 +408,7 @@ var _ = Describe("Generation of the container based instances", func() {
 				//
 				//
 				Expect(instance.Status.Environments).ToNot(BeEmpty())
-				Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+				Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 			})
 		})
 
@@ -453,7 +466,7 @@ var _ = Describe("Generation of the container based instances", func() {
 				//
 				//
 				Expect(instance.Status.Environments).ToNot(BeEmpty())
-				Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+				Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 			})
 
 			Context("The instance is running", func() {

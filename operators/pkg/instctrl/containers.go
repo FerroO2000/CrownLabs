@@ -145,7 +145,7 @@ func (r *InstanceReconciler) enforceContainer(ctx context.Context) error {
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "deployment", klog.KObj(&depl),
 			"previous", string(instanceStatusEnv.Phase), "current", string(phase))
-		instanceStatusEnv.Phase = phase
+		instance.Status.Environments[envIndex].Phase = phase
 	}
 
 	//
