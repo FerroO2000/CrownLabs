@@ -100,7 +100,7 @@ func (r *InstanceReconciler) enforceVirtualMachine(ctx context.Context) error {
 	//
 
 	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := instance.Status.Environments[envIndex]
+	instanceStatusEnv := &instance.Status.Environments[envIndex]
 
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "virtualmachine", klog.KObj(&vm),
@@ -159,7 +159,7 @@ func (r *InstanceReconciler) enforceVirtualMachineInstance(ctx context.Context) 
 	//
 
 	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := instance.Status.Environments[envIndex]
+	instanceStatusEnv := &instance.Status.Environments[envIndex]
 
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "virtualmachineinstance", klog.KObj(&vmi),
