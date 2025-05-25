@@ -262,6 +262,20 @@ var _ = Describe("Generation of the container based instances", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
 					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
 				})
+
+				//
+				//
+				//
+				When("the index is greater than 0 but still valid", func() {
+					BeforeEach(func() { index = 2 })
+
+					It("Should set the instance phase correctly", func() {
+						Expect(instance.Status.Environments).ToNot(BeEmpty())
+						Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseStarting))
+					})
+
+				})
+
 			})
 
 			When("the instance is not running", func() {
