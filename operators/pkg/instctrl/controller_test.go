@@ -170,7 +170,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				//
 				//
 				Expect(instance.Status.Environments).ToNot(BeEmpty())
-				Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseStarting))
+				Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseStarting))
 			})
 
 			By("Asserting the deployment has been created", func() {
@@ -240,7 +240,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 					//
 					//
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseUnset))
+					Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseUnset))
 
 					By("Asserting the VM has been created", func() {
 						var vm virtv1.VirtualMachine
@@ -279,7 +279,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 						//
 						//
 						Expect(instance.Status.Environments).ToNot(BeEmpty())
-						Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
+						Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
 					})
 
 					By("Asserting the VM spec has been changed", func() {
@@ -307,7 +307,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				//
 				//
 				Expect(instance.Status.Environments).ToNot(BeEmpty())
-				Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
+				Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
 
 				By("Asserting the VM has NOT been created", func() {
 					var vmi virtv1.VirtualMachineInstance
@@ -348,7 +348,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 					//
 					//
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
+					Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseRunning))
 				})
 			})
 		})
