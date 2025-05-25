@@ -46,6 +46,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 		runInstance    bool
 		instance       clv1alpha2.Instance
 		environment    clv1alpha2.Environment
+		index          int
 		ingress        netv1.Ingress
 		service        corev1.Service
 		createTenant   bool
@@ -112,6 +113,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 				PrettyName: prettyName,
 			},
 		}
+		index = 0
 
 		Expect(k8sClient.Create(ctx, &ns)).To(Succeed())
 		if createTenant {
@@ -132,7 +134,7 @@ var _ = Describe("The instance-controller Reconcile method", func() {
 			//
 			//
 			Expect(instance.Status.Environments).ToNot(BeEmpty())
-			Expect(instance.Status.Environments[0].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
+			Expect(instance.Status.Environments[index].Phase).To(Equal(clv1alpha2.EnvironmentPhaseOff))
 
 			By("Asserting the deployment has been created with no replicas", func() {
 				var deploy appsv1.Deployment
