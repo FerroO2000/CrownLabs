@@ -71,8 +71,12 @@ func RetrieveEnvironmentList(ctx context.Context, c client.Client, instance *clv
 	log.Info("retrieved the instance environment list", "template", templateName)
 
 	envListPtr := make([]*clv1alpha2.Environment, len(template.Spec.EnvironmentList))
-	for envIndex, env := range template.Spec.EnvironmentList {
-		envListPtr[envIndex] = &env
+	//for envIndex, env := range template.Spec.EnvironmentList {
+	//	envListPtr[envIndex] = &env
+	//}
+
+	for i := range template.Spec.EnvironmentList {
+		envListPtr[i] = &template.Spec.EnvironmentList[i]
 	}
 
 	return envListPtr, nil

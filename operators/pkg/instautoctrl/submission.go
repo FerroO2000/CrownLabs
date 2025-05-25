@@ -105,7 +105,7 @@ func (r *InstanceSubmissionReconciler) Reconcile(ctx context.Context, req ctrl.R
 	tracer.Step("retrieved the instance environment")
 
 	for envIndex, environment := range envList {
-		instanceStatusEnv := instance.Status.Environments[envIndex]
+		instanceStatusEnv := &instance.Status.Environments[envIndex]
 
 		if err := CheckEnvironmentValidity(&instance, environment); err != nil {
 			instance.SetLabels(forge.InstanceAutomationLabelsOnSubmission(instance.GetLabels(), false))

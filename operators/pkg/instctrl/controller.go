@@ -112,10 +112,13 @@ func (r *InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 			//
 			//
 
-			for _, instanceStatusEnv := range instance.Status.Environments {
-				instanceStatusEnv.Phase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
-			}
+			// for _, instanceStatusEnv := range instance.Status.Environments {
+			//	instanceStatusEnv.Phase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
+			// } // pare che se for _, value := slice, value e' copia non reference
 
+			for i := range instance.Status.Environments {
+				instance.Status.Environments[i].Phase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
+			}
 			//
 			//
 			//
@@ -193,6 +196,9 @@ func (r *InstanceReconciler) enforceEnvironments(ctx context.Context) error {
 	instance := clctx.InstanceFrom(ctx)
 	template := clctx.TemplateFrom(ctx)
 
+	// forse serve
+	//instance.Status.Environments = make([]clv1alpha2.InstanceStatusEnv, len(template.Spec.EnvironmentList))
+
 	for i := range template.Spec.EnvironmentList {
 		environment := &template.Spec.EnvironmentList[i]
 		// ctx, log := clctx.EnvironmentInto(ctx, environment)
@@ -242,14 +248,20 @@ func (r *InstanceReconciler) setInitialReadyTimeIfNecessary(ctx context.Context)
 	//
 	//
 	//
-
-	for _, instanceStatusEnv := range instance.Status.Environments {
-		if instanceStatusEnv.Phase != clv1alpha2.EnvironmentPhaseReady || instanceStatusEnv.InitialReadyTime != "" {
+	// same here
+	// for _, instanceStatusEnv := range instance.Status.Environments {
+	//	if instanceStatusEnv.Phase != clv1alpha2.EnvironmentPhaseReady || instanceStatusEnv.InitialReadyTime != "" {
+	//		return
+	//	}
+	for i := range instance.Status.Environments {
+		if instance.Status.Environments[i].Phase != clv1alpha2.EnvironmentPhaseReady || instance.Status.Environments[i].InitialReadyTime != "" {
 			return
 		}
-
 		duration := time.Since(instance.GetCreationTimestamp().Time).Truncate(time.Second)
-		instanceStatusEnv.InitialReadyTime = duration.String()
+		instance.Status.Environments[i].InitialReadyTime = duration.String()
+
+		//duration := time.Since(instance.GetCreationTimestamp().Time).Truncate(time.Second)
+		//instanceStatusEnv.InitialReadyTime = duration.String()
 
 		// Filter out possible outliers from the prometheus metrics.
 		if duration > 30*time.Minute {
