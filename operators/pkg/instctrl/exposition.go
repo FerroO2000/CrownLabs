@@ -158,10 +158,21 @@ func (r *InstanceReconciler) enforceInstanceExpositionAbsence(ctx context.Contex
 	//
 
 	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := instance.Status.Environments[envIndex]
+	// instanceStatusEnv := instance.Status.Environments[envIndex]
 
-	instanceStatusEnv.IP = ""
-	instanceStatusEnv.URL = ""
+	// instanceStatusEnv.IP = ""
+	// instanceStatusEnv.URL = ""
+
+	// check if Status.Environments has enough capacity
+	if len(instance.Status.Environments) <= envIndex {
+		// extend the array to envIndex+1 elements
+		newEnvs := make([]clv1alpha2.InstanceStatusEnv, envIndex+1)
+		copy(newEnvs, instance.Status.Environments)
+		instance.Status.Environments = newEnvs
+	}
+
+	instance.Status.Environments[envIndex].IP = ""
+	instance.Status.Environments[envIndex].URL = ""
 
 	//
 	//
