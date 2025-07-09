@@ -113,13 +113,13 @@ func IngressAuthenticationAnnotations(annotations map[string]string, instancesAu
 }
 
 // HostName returns the hostname based on the given EnvironmentMode.
-func HostName(baseHostName string, mode clv1alpha2.EnvironmentMode) string {
+func HostName(baseHostName string, mode clv1alpha2.TemplateScope) string {
 	switch mode {
-	case clv1alpha2.ModeStandard:
+	case clv1alpha2.ScopeStandard:
 		return baseHostName
-	case clv1alpha2.ModeExam:
+	case clv1alpha2.ScopeExam:
 		return "exam." + baseHostName
-	case clv1alpha2.ModeExercise:
+	case clv1alpha2.ScopeExercise:
 		return "exercise." + baseHostName
 	}
 
@@ -153,7 +153,7 @@ func IngressGuiStatusRootURL(host string, instance *clv1alpha2.Instance) string 
 }
 
 // IngressGuiStatusPathURL returns the path of the ingress targeting the environment.
-func IngressGuiStatusURL(environment *clv1alpha2.Environment) string {
+func IngressGuiStatusPathURL(environment *clv1alpha2.Environment) string {
 	switch environment.EnvironmentType {
 	case clv1alpha2.ClassStandalone, clv1alpha2.ClassContainer:
 		return fmt.Sprintf("%v/%v/", environment.Name, IngressAppSuffix)

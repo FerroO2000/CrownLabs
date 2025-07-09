@@ -34,9 +34,10 @@ import (
 func (r *InstanceReconciler) EnforceVMEnvironment(ctx context.Context) error {
 	log := ctrl.LoggerFrom(ctx)
 	environment := clctx.EnvironmentFrom(ctx)
+	template := clctx.TemplateFrom(ctx)
 
 	// Enforce the cloud-init secret when environment is not restricted
-	if environment.Mode == clv1alpha2.ModeStandard {
+	if template.Spec.Scope == clv1alpha2.ScopeStandard {
 		if err := r.EnforceCloudInitSecret(ctx); err != nil {
 			log.Error(err, "failed to enforce the cloud-init secret existence")
 			return err
@@ -96,8 +97,7 @@ func (r *InstanceReconciler) enforceVirtualMachine(ctx context.Context) error {
 	}
 	phase := r.RetrievePhaseFromVM(&vm, &vmi)
 
-	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := &instance.Status.Environments[envIndex]
+	instanceStatusEnv := instance.Status.Environments[environment.Name]
 
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "virtualmachine", klog.KObj(&vm),
@@ -142,8 +142,7 @@ func (r *InstanceReconciler) enforceVirtualMachineInstance(ctx context.Context) 
 		phase = clv1alpha2.EnvironmentPhaseOff
 	}
 
-	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := &instance.Status.Environments[envIndex]
+	instanceStatusEnv := instance.Status.Environments[environment.Name]
 
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "virtualmachineinstance", klog.KObj(&vmi),

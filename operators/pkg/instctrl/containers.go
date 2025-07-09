@@ -137,12 +137,11 @@ func (r *InstanceReconciler) enforceContainer(ctx context.Context) error {
 		phase = clv1alpha2.EnvironmentPhaseOff
 	}
 
-	envIndex := clctx.EnvironmentIndexFrom(ctx)
-	instanceStatusEnv := instance.Status.Environments[envIndex]
+	instanceStatusEnv := instance.Status.Environments[environment.Name]
 	if phase != instanceStatusEnv.Phase {
 		log.Info("phase changed", "deployment", klog.KObj(&depl),
 			"previous", string(instanceStatusEnv.Phase), "current", string(phase))
-		instance.Status.Environments[envIndex].Phase = phase
+		instanceStatusEnv.Phase = phase
 	}
 
 	return nil

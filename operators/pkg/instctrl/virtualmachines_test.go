@@ -44,11 +44,12 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 		clientBuilder fake.ClientBuilder
 		reconciler    instctrl.InstanceReconciler
 
-		instance    clv1alpha2.Instance
-		template    clv1alpha2.Template
-		environment clv1alpha2.Environment
-		tenant      clv1alpha2.Tenant
-		index       int
+		instance     clv1alpha2.Instance
+		template     clv1alpha2.Template
+		environment  clv1alpha2.Environment
+		environment1 clv1alpha2.Environment
+		environment2 clv1alpha2.Environment
+		tenant       clv1alpha2.Tenant
 
 		objectName     types.NamespacedName
 		objectName_env types.NamespacedName
@@ -59,7 +60,8 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 		ownerRef metav1.OwnerReference
 
-		err error
+		err             error
+		environmentName string
 	)
 
 	const (
@@ -67,7 +69,6 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 		instanceNamespace = "tenant-tester"
 		templateName      = "kubernetes"
 		templateNamespace = "workspace-netgroup"
-		environmentName   = "control-plane"
 		tenantName        = "tester"
 		workspaceName     = "netgroup"
 		webdavCredentials = "webdav-credentials"
@@ -102,17 +103,14 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 				Tenant:   clv1alpha2.GenericRef{Name: tenantName},
 			},
 			Status: clv1alpha2.InstanceStatus{
-				Environments: []clv1alpha2.InstanceStatusEnv{
-					{Phase: ""},
-					{Phase: ""},
-					{Phase: ""},
-				},
+				Environments: make(map[string]*clv1alpha2.InstanceStatusEnv),
 			},
 		}
 		environment = clv1alpha2.Environment{
-			Name:            environmentName,
-			EnvironmentType: clv1alpha2.ClassVM,
-			Image:           image,
+			Name:               "control-plane",
+			EnvironmentType:    clv1alpha2.ClassContainer,
+			Image:              image,
+			MountMyDriveVolume: false,
 			Resources: clv1alpha2.EnvironmentResources{
 				CPU:                   cpu,
 				ReservedCPUPercentage: cpuReserved,
@@ -120,14 +118,52 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 				Disk:                  resource.MustParse(disk),
 			},
 		}
+
+		environment1 = clv1alpha2.Environment{
+			Name:               "dev-1",
+			EnvironmentType:    clv1alpha2.ClassCloudVM,
+			Image:              image,
+			MountMyDriveVolume: false,
+			Resources: clv1alpha2.EnvironmentResources{
+				CPU:                   cpu,
+				ReservedCPUPercentage: cpuReserved,
+				Memory:                resource.MustParse(memory),
+				Disk:                  resource.MustParse(disk),
+			},
+		}
+
+		environment2 = clv1alpha2.Environment{
+			Name:               "dev-2",
+			EnvironmentType:    clv1alpha2.ClassCloudVM,
+			Image:              image,
+			MountMyDriveVolume: false,
+			Resources: clv1alpha2.EnvironmentResources{
+				CPU:                   cpu,
+				ReservedCPUPercentage: cpuReserved,
+				Memory:                resource.MustParse(memory),
+				Disk:                  resource.MustParse(disk),
+			},
+		}
+
+		instance.Status.Environments[environment.Name] = &clv1alpha2.InstanceStatusEnv{
+			Phase: "",
+		}
+		instance.Status.Environments[environment1.Name] = &clv1alpha2.InstanceStatusEnv{
+			Phase: "",
+		}
+		instance.Status.Environments[environment2.Name] = &clv1alpha2.InstanceStatusEnv{
+			Phase: "",
+		}
+
 		template = clv1alpha2.Template{
 			ObjectMeta: metav1.ObjectMeta{Name: templateName, Namespace: templateNamespace},
 			Spec: clv1alpha2.TemplateSpec{
-				WorkspaceRef:    clv1alpha2.GenericRef{Name: workspaceName},
-				EnvironmentList: []clv1alpha2.Environment{environment},
+				EnvironmentList: []clv1alpha2.Environment{environment, environment1, environment2},
 			},
 		}
-		index = 0
+
+		environmentName = environment.Name
+
 		tenant = clv1alpha2.Tenant{ObjectMeta: metav1.ObjectMeta{Name: tenantName}}
 
 		objectName = forge.NamespacedName(&instance)
@@ -155,7 +191,6 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 		ctx, _ = clctx.TemplateInto(ctx, &template)
 		ctx, _ = clctx.EnvironmentInto(ctx, &environment)
 		ctx, _ = clctx.TenantInto(ctx, &tenant)
-		ctx = clctx.EnvironmentIndexInto(ctx, index)
 		err = reconciler.EnforceVMEnvironment(ctx)
 	})
 
@@ -223,7 +258,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should leave the instance phase unset", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[0].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseUnset))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseUnset))
 				})
 			})
 
@@ -243,7 +278,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should set the instance phase to Off", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -276,7 +311,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should set the correct instance phase", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseRunning))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseRunning))
 				})
 			})
 
@@ -294,7 +329,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should set the instance phase to Off", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseOff))
 				})
 			})
 		})
@@ -336,7 +371,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should leave the instance phase unset", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseUnset))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseUnset))
 				})
 			})
 
@@ -368,7 +403,7 @@ var _ = Describe("Generation of the virtual machine and virtual machine instance
 
 				It("Should set the correct instance phase", func() {
 					Expect(instance.Status.Environments).ToNot(BeEmpty())
-					Expect(instance.Status.Environments[index].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseRunning))
+					Expect(instance.Status.Environments[environmentName].Phase).To(BeIdenticalTo(clv1alpha2.EnvironmentPhaseRunning))
 				})
 
 				Context("The instance is running", func() {

@@ -125,9 +125,6 @@ type InstanceStatusEnv struct {
 	// The amount of time the Environment required to become ready for the first time
 	// upon creation.
 	InitialReadyTime string `json:"initialReadyTime,omitempty"`
-
-	// Timestamps of the Environment automation phases (check, termination and submission).
-	Automation InstanceAutomationStatus `json:"automation,omitempty"`
 }
 
 // InstanceStatus reflects the most recently observed status of the Instance.
@@ -147,8 +144,11 @@ type InstanceStatus struct {
 	// and is specified in InstanceStausEnv
 	RootURL string `json:"rootUrl,omitempty"`
 
+	// Timestamps of the Instance automation phases (check, termination and submission).
+	Automation InstanceAutomationStatus `json:"automation,omitempty"`
+
 	// Environments contains the status of the instance's environments.
-	Environments []InstanceStatusEnv `json:"environments,omitempty"`
+	Environments map[string]*InstanceStatusEnv `json:"environments,omitempty"`
 }
 
 // +kubebuilder:object:root=true

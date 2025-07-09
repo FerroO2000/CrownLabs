@@ -288,7 +288,7 @@ var _ = Describe("VirtualMachines and VirtualMachineInstances forging", func() {
 		}
 
 		When("mode is Standard", WhenBody(VolumesDiskTargetsCase{
-			Mode: clv1alpha2.ModeStandard,
+			Mode: clv1alpha2.ScopeStandard,
 			Expected: []virtv1.Disk{
 				forge.VolumeDiskTarget("root"),
 				forge.VolumeDiskTarget("cloud-init"),
@@ -296,12 +296,12 @@ var _ = Describe("VirtualMachines and VirtualMachineInstances forging", func() {
 		}))
 
 		When("mode is Exercise", WhenBody(VolumesDiskTargetsCase{
-			Mode:     clv1alpha2.ModeExercise,
+			Mode:     clv1alpha2.ScopeExercise,
 			Expected: []virtv1.Disk{forge.VolumeDiskTarget("root")},
 		}))
 
 		When("mode is Exam", WhenBody(VolumesDiskTargetsCase{
-			Mode:     clv1alpha2.ModeExam,
+			Mode:     clv1alpha2.ScopeExam,
 			Expected: []virtv1.Disk{forge.VolumeDiskTarget("root")},
 		}))
 	})

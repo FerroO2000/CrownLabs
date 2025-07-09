@@ -27,9 +27,9 @@ type EnvironmentType string
 
 // +kubebuilder:validation:Enum="Standard";"Exam";"Exercise"
 
-// EnvironmentMode is an enumeration of the mode in which associated instances should be started:
-// each mode consists in presets for exposition and deployment.
-type EnvironmentMode string
+// TemplateScope is an enumeration of the scope in which associated instance should be started:
+// each scope consists in presets for exposition and deployment.
+type TemplateScope string
 
 const (
 	// ClassContainer -> the environment is constituted by a Docker container exposing a service through a VNC server.
@@ -41,12 +41,12 @@ const (
 	// ClassStandalone -> the environment is constituted by a Docker Container exposing a web service through an http interface.
 	ClassStandalone EnvironmentType = "Standalone"
 
-	// ModeStandard -> Normal operation (authentication, ssh, files access).
-	ModeStandard EnvironmentMode = "Standard"
-	// ModeExam -> Restricted access (no authentication, no mydrive access).
-	ModeExam EnvironmentMode = "Exam"
-	// ModeExercise -> Restricted access (no authentication, no mydrive access).
-	ModeExercise EnvironmentMode = "Exercise"
+	// ScopeStandard -> Normal operation (authentication, ssh, files access).
+	ScopeStandard TemplateScope = "Standard"
+	// ScopeExam -> Restricted access (no authentication, no mydrive access).
+	ScopeExam TemplateScope = "Exam"
+	// ScopeExercise -> Restricted access (no authentication, no mydrive access).
+	ScopeExercise TemplateScope = "Exercise"
 )
 
 // TemplateSpec is the specification of the desired state of the Template.
@@ -59,6 +59,10 @@ type TemplateSpec struct {
 
 	// The reference to the Workspace this Template belongs to.
 	WorkspaceRef GenericRef `json:"workspace.crownlabs.polito.it/WorkspaceRef,omitempty"`
+
+	// +kubebuilder:default="Standard"
+	// The scope associated with the template (Standard, Exam, Exercise)
+	Scope TemplateScope `json:"scope,omitempty"`
 
 	// The list of environments (i.e. VMs or containers) that compose the Template.
 	// Each environment must have a unique name within the Template.
@@ -119,11 +123,6 @@ type Environment struct {
 
 	// The amount of computational resources associated with the environment.
 	Resources EnvironmentResources `json:"resources"`
-
-	// +kubebuilder:default="Standard"
-
-	// The mode associated with the environment (Standard, Exam, Exercise)
-	Mode EnvironmentMode `json:"mode,omitempty"`
 
 	// +kubebuilder:default=false
 	// Whether the environment needs the URL Rewrite or not.

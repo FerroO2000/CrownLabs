@@ -149,25 +149,12 @@ func (r *InstanceTerminationReconciler) CheckInstanceTermination(ctx context.Con
 		return false, err
 	}
 
-	for _, instanceStatusEnv := range instance.Status.Environments {
-		instanceStatusEnv.Automation.LastCheckTime = metav1.Now()
-		if statusCode == http.StatusOK {
-			instanceStatusEnv.Automation.TerminationTime = metav1.Time{Time: statusCheckReponse.Deadline}
-		} else if statusCode == http.StatusNotFound {
-			instanceStatusEnv.Automation.TerminationTime = metav1.Now()
-		}
+	instance.Status.Automation.LastCheckTime = metav1.Now()
+	if statusCode == http.StatusOK {
+		instance.Status.Automation.TerminationTime = metav1.Time{Time: statusCheckReponse.Deadline}
+	} else if statusCode == http.StatusNotFound {
+		instance.Status.Automation.TerminationTime = metav1.Now()
 	}
-
-	//
-	//
-	//
-
-	// instance.Status.Automation.LastCheckTime = metav1.Now()
-	// if statusCode == http.StatusOK {
-	// 	instance.Status.Automation.TerminationTime = metav1.Time{Time: statusCheckReponse.Deadline}
-	// } else if statusCode == http.StatusNotFound {
-	// 	instance.Status.Automation.TerminationTime = metav1.Now()
-	// }
 
 	if err := r.Status().Update(ctx, instance); err != nil {
 		log.Error(err, "failed updating instance status")
@@ -184,6 +171,7 @@ func (r *InstanceTerminationReconciler) CheckInstanceTermination(ctx context.Con
 	default:
 		return false, fmt.Errorf("failed: unexpected status code %d, retrieved error='%s'", statusCode, statusCheckReponse.Error)
 	}
+
 }
 
 // TerminateInstance terminates the Instance.

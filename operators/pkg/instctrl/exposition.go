@@ -45,21 +45,7 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	log := ctrl.LoggerFrom(ctx)
 	instance := clctx.InstanceFrom(ctx)
 	environment := clctx.EnvironmentFrom(ctx)
-
-	//
-	//
-	//
-
-	envIndex := clctx.EnvironmentIndexFrom(ctx)
-
-	//index out of range
-	if envIndex >= len(instance.Status.Environments) {
-		return nil
-	}
-
-	//
-	//
-	//
+	template := clctx.TemplateFrom(ctx)
 
 	// Enforce the service presence
 	service := v1.Service{ObjectMeta: forge.ObjectMetaWithSuffix(instance, environment.Name)}
@@ -86,7 +72,7 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	}
 	log.V(utils.FromResult(res)).Info("object enforced", "service", klog.KObj(&service), "result", res)
 
-	instance.Status.Environments[envIndex].IP = service.Spec.ClusterIP
+	instance.Status.Environments[environment.Name].IP = service.Spec.ClusterIP
 
 	// No need to create ingress resources in case of gui-less VMs.
 	if (environment.EnvironmentType == clv1alpha2.ClassVM || environment.EnvironmentType == clv1alpha2.ClassCloudVM) && !environment.GuiEnabled {
@@ -94,9 +80,7 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 	}
 
 	// Enforce the ingress to access the environment GUI
-
-	host := forge.HostName(r.ServiceUrls.WebsiteBaseURL, environment.Mode)
-
+	host := forge.HostName(r.ServiceUrls.WebsiteBaseURL, template.Spec.Scope)
 	ingressGUI := netv1.Ingress{ObjectMeta: forge.ObjectMetaWithSuffix(instance, environment.Name+"-"+forge.IngressGUIName(environment))}
 	res, err = ctrl.CreateOrUpdate(ctx, r.Client, &ingressGUI, func() error {
 		// Ingress specifications are forged only at creation time, to prevent issues in case of updates.
@@ -109,7 +93,7 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 
 		ingressGUI.SetAnnotations(forge.IngressGUIAnnotations(environment, ingressGUI.GetAnnotations()))
 
-		if environment.Mode == clv1alpha2.ModeStandard {
+		if template.Spec.Scope == clv1alpha2.ScopeStandard {
 			ingressGUI.SetAnnotations(forge.IngressAuthenticationAnnotations(ingressGUI.GetAnnotations(), r.ServiceUrls.InstancesAuthURL))
 		}
 
@@ -123,7 +107,7 @@ func (r *InstanceReconciler) enforceInstanceExpositionPresence(ctx context.Conte
 
 	log.V(utils.FromResult(res)).Info("object enforced", "ingress", klog.KObj(&ingressGUI), "result", res)
 
-	instance.Status.Environments[envIndex].URL = forge.IngressGuiStatusURL(host, environment, instance)
+	instance.Status.Environments[environment.Name].PathURL = forge.IngressGuiStatusPathURL(environment)
 
 	return nil
 }
@@ -133,18 +117,8 @@ func (r *InstanceReconciler) enforceInstanceExpositionAbsence(ctx context.Contex
 	instance := clctx.InstanceFrom(ctx)
 	environment := clctx.EnvironmentFrom(ctx)
 
-	envIndex := clctx.EnvironmentIndexFrom(ctx)
-
-	// check if Status.Environments has enough capacity
-	if len(instance.Status.Environments) <= envIndex {
-		// extend the array to envIndex+1 elements
-		newEnvs := make([]clv1alpha2.InstanceStatusEnv, envIndex+1)
-		copy(newEnvs, instance.Status.Environments)
-		instance.Status.Environments = newEnvs
-	}
-
-	instance.Status.Environments[envIndex].IP = ""
-	instance.Status.Environments[envIndex].URL = ""
+	instance.Status.Environments[environment.Name].IP = ""
+	instance.Status.Environments[environment.Name].PathURL = ""
 
 	// Enforce service absence
 	service := v1.Service{ObjectMeta: forge.ObjectMetaWithSuffix(instance, environment.Name)}

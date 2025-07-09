@@ -107,9 +107,10 @@ func (r *InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		// If the reconciliation failed with an error, set the instance phase to CreationLoopBackOff.
 		// Do not set the CreationLoopBackOff phase in case of conflicts, to prevent transients.
 		if err != nil && !kerrors.IsConflict(err) {
-			for i := range instance.Status.Environments {
-				instance.Status.Environments[i].Phase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
+			for _, envStatus := range instance.Status.Environments {
+				envStatus.Phase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
 			}
+			instance.Status.OuterPhase = clv1alpha2.EnvironmentPhaseCreationLoopBackoff
 		}
 
 		// Avoid triggering the status update if not necessary.
@@ -167,6 +168,10 @@ func (r *InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (r
 		log.Info("instance labels correctly configured")
 	}
 
+	// Assign to the instance the root url
+	host := forge.HostName(r.ServiceUrls.WebsiteBaseURL, template.Spec.Scope)
+	instance.Status.RootURL = forge.IngressGuiStatusRootURL(host, &instance)
+
 	// Iterate over and enforce the instance environments.
 	if err := r.enforceEnvironments(ctx); err != nil {
 		log.Error(err, "failed to enforce instance environments")
@@ -217,12 +222,12 @@ func (r *InstanceReconciler) enforceEnvironments(ctx context.Context) error {
 func (r *InstanceReconciler) setInitialReadyTimeIfNecessary(ctx context.Context) {
 	instance := clctx.InstanceFrom(ctx)
 
-	for i := range instance.Status.Environments {
-		if instance.Status.Environments[i].Phase != clv1alpha2.EnvironmentPhaseReady || instance.Status.Environments[i].InitialReadyTime != "" {
+	for _, envStatus := range instance.Status.Environments {
+		if envStatus.Phase != clv1alpha2.EnvironmentPhaseReady || envStatus.InitialReadyTime != "" {
 			return
 		}
 		duration := time.Since(instance.GetCreationTimestamp().Time).Truncate(time.Second)
-		instance.Status.Environments[i].InitialReadyTime = duration.String()
+		envStatus.InitialReadyTime = duration.String()
 
 		// Filter out possible outliers from the prometheus metrics.
 		if duration > 30*time.Minute {
@@ -267,4 +272,110 @@ func (r *InstanceReconciler) vmiToInstance(_ context.Context, o client.Object) [
 	}
 
 	return nil
+}
+
+// it computer OuterPhase of the instance from all Phase of the associated environments.
+func (r *InstanceReconciler) computeInstancePhase(instance *clv1alpha2.Instance) clv1alpha2.InstancePhase {
+
+	var (
+		// Highest priority
+		hasFailed                bool
+		hasResourceQuotaExceeded bool
+		hasCreationLoopBackoff   bool
+
+		// Medium priority (transient states)
+		hasStopping  bool
+		hasImporting bool
+		hasStarting  bool
+
+		// Low priority (steady states)
+		allOff             = true // Assume all are off, then prove otherwise
+		allRunningNotReady = true // Assume all are running but not ready, then prove otherwise
+		allReady           = true // Assume all are ready, then prove otherwise
+	)
+
+	// Iterate through each environment's status
+	for _, envStatus := range instance.Status.Environments {
+		if envStatus == nil {
+			continue
+		}
+
+		switch envStatus.Phase {
+		case clv1alpha2.EnvironmentPhaseFailed:
+			hasFailed = true
+		case clv1alpha2.EnvironmentPhaseResourceQuotaExceeded:
+			hasResourceQuotaExceeded = true
+		case clv1alpha2.EnvironmentPhaseCreationLoopBackoff:
+			hasCreationLoopBackoff = true
+		case clv1alpha2.EnvironmentPhaseStopping:
+			hasStopping = true
+		case clv1alpha2.EnvironmentPhaseImporting:
+			hasImporting = true
+		case clv1alpha2.EnvironmentPhaseStarting:
+			hasStarting = true
+		case clv1alpha2.EnvironmentPhaseRunning:
+			// This is a "running" state but not fully "Ready"
+			// If we find any 'Running' phase, it means not all are 'Ready'
+			allReady = false
+			allOff = false // Also means not all are off
+		case clv1alpha2.EnvironmentPhaseReady:
+			// This is the ideal state.
+			allRunningNotReady = false // Found a Ready, so not all are just Running
+			allOff = false             // Also means not all are off
+		case clv1alpha2.EnvironmentPhaseOff:
+			// This state allows 'allOff' to remain true if all others are also Off
+			allReady = false           // If any are off, not all are ready
+			allRunningNotReady = false // If any are off, not all are running (not ready)
+		case clv1alpha2.EnvironmentPhaseUnset:
+			// Treat unset as a transient state, similar to starting,
+			// as its status is not yet determined.
+			hasStarting = true // Or you could define a specific InstancePhaseUnset
+			allReady = false
+			allRunningNotReady = false
+			allOff = false
+		}
+	}
+
+	// 4. Apply the hierarchy rules (from highest priority to lowest)
+	if hasFailed {
+		return clv1alpha2.EnvironmentPhaseFailed
+	}
+	if hasResourceQuotaExceeded {
+		return clv1alpha2.EnvironmentPhaseResourceQuotaExceeded
+	}
+	if hasCreationLoopBackoff {
+		return clv1alpha2.EnvironmentPhaseCreationLoopBackoff
+	}
+	if hasStopping {
+		return clv1alpha2.EnvironmentPhaseStopping
+	}
+	if hasImporting {
+		return clv1alpha2.EnvironmentPhaseImporting
+	}
+	if hasStarting {
+		return clv1alpha2.EnvironmentPhaseStarting
+	}
+	// If we reach here, no high-priority transient/error states were found.
+	// Now check for the steady states.
+	if allReady {
+		return clv1alpha2.EnvironmentPhaseReady
+	}
+	if allRunningNotReady { // If all are running but not all are ready
+		return clv1alpha2.EnvironmentPhaseReady
+	}
+	if allOff { // If all were found to be explicitly off
+		return clv1alpha2.EnvironmentPhaseOff
+	}
+
+	// Fallback: If we reached here, it means there's a mix of Running/Ready/Off
+	// or some other combination that doesn't fit the above clear states.
+	// For example, if some are Running and some are Off.
+	// In such a mixed state, you might decide on a "PartialRunning" or "Degraded" phase,
+	// or just default to "Running" if at least one is running.
+	// A safe default for a mixed active state could be "Running" or "Starting" depending on desired behavior.
+	if hasRunning || hasReady { // hasRunning means Running or Ready states encountered
+		return clv1alpha2.InstancePhaseRunning // At least one environment is active
+	}
+	// If somehow we get here and no active states, but not allOff, it means something is weird.
+	return clv1alpha2.InstancePhaseUnset // Or a specific "Unknown" phase
 }
